@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AppSales Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a26;
+      --accent: #00e5ff;
+      --accent2: #7c3aed;
+      --accent3: #f59e0b;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --border: rgba(255,255,255,0.07);
+      --success: #22d3a5;
+      --danger: #f43f5e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+    }
+    h1,h2,h3,h4,.display-font { font-family: 'Syne', sans-serif; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 240px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      min-height: 100vh;
+      position: fixed;
+      left: 0; top: 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 24px 20px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo .logo-badge {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border-radius: 8px;
+      width: 36px; height: 36px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 18px; margin-right: 10px;
+    }
+    .sidebar-logo span {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: -0.5px;
+    }
+    .sidebar-logo .sub { font-size: 0.65rem; color: var(--muted); display: block; }
+    .nav-section-label {
+      font-size: 0.6rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 20px 20px 6px;
+    }
+    .nav-item a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 20px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.8rem;
+      border-left: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .nav-item a.active, .nav-item a:hover {
+      color: var(--text);
+      background: var(--surface2);
+      border-left-color: var(--accent);
+    }
+    .nav-item a .icon { font-size: 1rem; width: 20px; text-align: center; }
+
+    /* MAIN */
+    .main-wrap {
+      margin-left: 240px;
+      min-height: 100vh;
+    }
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; }
+    .topbar-date { font-size: 0.75rem; color: var(--muted); }
+    .btn-accent {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border: none; color: #fff; font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 0.78rem; border-radius: 8px;
+      padding: 8px 18px; cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-accent:hover { opacity: 0.85; }
+
+    .page { padding: 28px; display: none; }
+    .page.active { display: block; }
+
+    /* STAT CARDS */
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 22px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .stat-card:hover { border-color: rgba(255,255,255,0.15); }
+    .stat-card .glow {
+      position: absolute; top: -20px; right: -20px;
+      width: 80px; height: 80px; border-radius: 50%;
+      opacity: 0.12;
+    }
+    .stat-card .label { font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .stat-card .value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin: 4px 0 2px; }
+    .stat-card .change { font-size: 0.72rem; }
+    .change.up { color: var(--success); }
+    .change.down { color: var(--danger); }
+
+    /* TABLE */
+    .data-table {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .data-table-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .data-table-header h3 { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700; }
+    .data-table table { width: 100%; border-collapse: collapse; }
+    .data-table th {
+      font-size: 0.62rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border);
+    }
+    .data-table td { padding: 12px 16px; font-size: 0.78rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--surface2); }
+    .badge-pill {
+      display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 500;
+    }
+    .badge-success { background: rgba(34,211,165,0.15); color: var(--success); }
+    .badge-pending { background: rgba(245,158,11,0.15); color: var(--accent3); }
+    .badge-failed { background: rgba(244,63,94,0.15); color: var(--danger); }
+    .badge-new { background: rgba(0,229,255,0.12); color: var(--accent); }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      width: 100%; max-width: 480px;
+      position: relative;
+      animation: popIn 0.25s ease;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.93) translateY(10px); opacity: 0; }
+      to   { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .modal-box h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; margin-bottom: 20px; }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      background: var(--surface2); border: none; color: var(--muted);
+      width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .form-label-custom { font-size: 0.68rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; display: block; }
+    .form-control-dark {
+      background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      border-radius: 8px; padding: 9px 13px; font-family: 'DM Mono', monospace;
+      font-size: 0.8rem; width: 100%; transition: border-color 0.2s;
+    }
+    .form-control-dark:focus { outline: none; border-color: var(--accent); }
+    .form-control-dark option { background: var(--surface); }
+
+    /* MINI BAR CHART */
+    .mini-chart { display: flex; align-items: flex-end; gap: 5px; height: 60px; padding-top: 8px; }
+    .bar-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 3px; }
+    .bar {
+      width: 100%; border-radius: 4px 4px 0 0;
+      background: linear-gradient(180deg, var(--accent2), var(--accent));
+      min-height: 4px;
+      transition: height 0.4s ease;
+    }
+    .bar-label { font-size: 0.55rem; color: var(--muted); }
+
+    /* RESPONSE METER */
+    .meter-wrap { height: 6px; background: var(--surface2); border-radius: 999px; overflow: hidden; margin-top: 6px; }
+    .meter-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent2), var(--accent)); transition: width 0.4s; }
+
+    /* TOAST */
+    .toast-wrap {
+      position: fixed; bottom: 24px; right: 24px; z-index: 500;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .toast-item {
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 0.78rem;
+      animation: slideUp 0.3s ease;
+      color: var(--accent);
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* MISC */
+    .section-title {
+      font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .dot-online { width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+    .action-btn {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 6px; padding: 4px 10px; font-size: 0.7rem; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .action-btn.del:hover { border-color: var(--danger); color: var(--danger); }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 60px; }
+      .sidebar-logo span, .sidebar-logo .sub, .nav-section-label, .nav-item a span { display: none; }
+      .main-wrap { margin-left: 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo d-flex align-items-center">
+    <div class="logo-badge">📱</div>
+    <div>
+      <span>AppSales</span>
+      <span class="sub">Admin Panel</span>
+    </div>
+  </div>
+  <div class="nav-section-label">Menu</div>
+  <ul class="nav flex-column list-unstyled">
+    <li class="nav-item"><a href="#" class="active" data-page="dashboard"><span class="icon">📊</span><span>Dashboard</span></a></li>
+    <li class="nav-item"><a href="#" data-page="attempts"><span class="icon">🚀</span><span>Sales Attempts</span></a></li>
+    <li class="nav-item"><a href="#" data-page="responses"><span class="icon">💬</span><span>Responses</span></a></li>
+    <li class="nav-item"><a href="#" data-page="apps"><span class="icon">🛍️</span><span>My Apps</span></a></li>
+  </ul>
+</div>
+
+<!-- MAIN -->
+<div class="main-wrap">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="pageTitle">Dashboard</div>
+      <div class="topbar-date" id="liveDate"></div>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn-accent" id="logAttemptBtn">+ Log Attempt</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD PAGE -->
+  <div class="page active" id="page-dashboard">
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="glow" style="background:var(--accent);"></div>
+          <div class="label">Today's Attempts</div>
+          <div class="value" id="stat-attempts">0</div>
+          <div class="change up" id="stat-attempts-change">↑ — vs yesterday</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="glow" style="background:var(--success);"></div>
+          <div class="label">Responses Today</div>
+          <div class="value" id="stat-responses">0</div>
+          <div class="change up" id="stat-resp-change">↑ — response rate</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="glow" style="background:var(--accent2);"></div>
+          <div class="label">Conversions</div>
+          <div class="value" id="stat-conversions">0</div>
+          <div class="change" id="stat-conv-rate">— conversion rate</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="glow" style="background:var(--accent3);"></div>
+          <div class="label">Total Logged</div>
+          <div class="value" id="stat-total">0</div>
+          <div class="change up">All-time records</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHART + APPS -->
+    <div class="row g-3 mb-4">
+      <div class="col-lg-7">
+        <div class="data-table">
+          <div class="data-table-header">
+            <h3>Weekly Attempts</h3>
+            <span style="font-size:0.7rem;color:var(--muted)">Last 7 days</span>
+          </div>
+          <div style="padding:16px 20px 20px;">
+            <div class="mini-chart" id="weekChart"></div>
+            <div style="display:flex;justify-content:space-between;margin-top:4px;" id="weekLabels"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="data-table h-100">
+          <div class="data-table-header">
+            <h3>App Performance</h3>
+          </div>
+          <div style="padding:12px 16px;" id="appPerfList">
+            <div style="font-size:0.75rem;color:var(--muted);padding:10px 0;">No apps added yet.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECENT TABLE -->
+    <div class="section-title">Recent Activity</div>
+    <div class="data-table">
+      <div class="data-table-header">
+        <h3>Latest Sales Attempts</h3>
+        <span style="font-size:0.7rem;color:var(--muted);"><span class="dot-online"></span>Live</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Time</th><th>App</th><th>Channel</th><th>Response</th><th>Outcome</th><th>Note</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="recentTable">
+            <tr><td colspan="8" style="color:var(--muted);font-size:0.75rem;padding:20px;">No attempts logged yet. Click "+ Log Attempt" to start.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATTEMPTS PAGE -->
+  <div class="page" id="page-attempts">
+    <div class="section-title">All Sales Attempts</div>
+    <div class="data-table">
+      <div class="data-table-header">
+        <h3>Attempt Log</h3>
+        <div class="d-flex gap-2">
+          <input type="date" id="filterDate" class="form-control-dark" style="width:auto;padding:5px 10px;font-size:0.75rem;"/>
+          <button class="action-btn" onclick="App.clearFilter()">Clear</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr><th>Date</th><th>Time</th><th>App</th><th>Channel</th><th>Response</th><th>Outcome</th><th>Note</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="fullTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESPONSES PAGE -->
+  <div class="page" id="page-responses">
+    <div class="section-title">Response Analysis</div>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="stat-card text-center">
+          <div class="label">Responded</div>
+          <div class="value" id="resp-responded" style="color:var(--success)">0</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card text-center">
+          <div class="label">No Response</div>
+          <div class="value" id="resp-noresp" style="color:var(--muted)">0</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card text-center">
+          <div class="label">Converted (Sold)</div>
+          <div class="value" id="resp-sold" style="color:var(--accent)">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="data-table mt-4">
+      <div class="data-table-header"><h3>Channel Breakdown</h3></div>
+      <div style="padding:16px 20px;" id="channelBreakdown">
+        <div style="color:var(--muted);font-size:0.75rem;">Log some attempts to see breakdown.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPS PAGE -->
+  <div class="page" id="page-apps">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="section-title mb-0">My Android Apps</div>
+      <button class="btn-accent" id="addAppBtn">+ Add App</button>
+    </div>
+    <div class="row g-3" id="appGrid">
+      <div class="col-12" style="color:var(--muted);font-size:0.78rem;">No apps added yet.</div>
+    </div>
+  </div>
+</div>
+
+<!-- LOG ATTEMPT MODAL -->
+<div class="modal-overlay" id="attemptModal">
+  <div class="modal-box">
+    <button class="modal-close" id="closeAttemptModal">✕</button>
+    <h3 id="modalTitle">📋 Log Sales Attempt</h3>
+    <input type="hidden" id="editIndex" value="-1"/>
+    <div class="mb-3">
+      <label class="form-label-custom">Date</label>
+      <input type="date" id="inp-date" class="form-control-dark"/>
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">Time</label>
+      <input type="time" id="inp-time" class="form-control-dark"/>
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">App</label>
+      <select id="inp-app" class="form-control-dark">
+        <option value="">— Select App —</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">Channel</label>
+      <select id="inp-channel" class="form-control-dark">
+        <option value="WhatsApp">WhatsApp</option>
+        <option value="Email">Email</option>
+        <option value="Instagram DM">Instagram DM</option>
+        <option value="Facebook">Facebook</option>
+        <option value="Twitter/X">Twitter/X</option>
+        <option value="LinkedIn">LinkedIn</option>
+        <option value="In-Person">In-Person</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">Response</label>
+      <select id="inp-response" class="form-control-dark">
+        <option value="No Response">No Response</option>
+        <option value="Responded">Responded</option>
+        <option value="Interested">Interested</option>
+        <option value="Not Interested">Not Interested</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">Outcome</label>
+      <select id="inp-outcome" class="form-control-dark">
+        <option value="Pending">Pending</option>
+        <option value="Sold">Sold ✅</option>
+        <option value="Rejected">Rejected ❌</option>
+        <option value="Follow-up">Follow-up 🔄</option>
+      </select>
+    </div>
+    <div class="mb-4">
+      <label class="form-label-custom">Note (optional)</label>
+      <input type="text" id="inp-note" class="form-control-dark" placeholder="Any quick note…"/>
+    </div>
+    <button class="btn-accent w-100" id="saveAttemptBtn">Save Attempt</button>
+  </div>
+</div>
+
+<!-- ADD APP MODAL -->
+<div class="modal-overlay" id="appModal">
+  <div class="modal-box">
+    <button class="modal-close" id="closeAppModal">✕</button>
+    <h3>📱 Add Android App</h3>
+    <div class="mb-3">
+      <label class="form-label-custom">App Name</label>
+      <input type="text" id="inp-appname" class="form-control-dark" placeholder="e.g. BudgetPro"/>
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">Category</label>
+      <input type="text" id="inp-appcat" class="form-control-dark" placeholder="e.g. Finance, Tools, Games…"/>
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">Price ($)</label>
+      <input type="number" id="inp-appprice" class="form-control-dark" placeholder="0.00" step="0.01" min="0"/>
+    </div>
+    <div class="mb-4">
+      <label class="form-label-custom">Description</label>
+      <input type="text" id="inp-appdesc" class="form-control-dark" placeholder="Short description…"/>
+    </div>
+    <button class="btn-accent w-100" id="saveAppBtn">Add App</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+const App = (() => {
+  let attempts = JSON.parse(localStorage.getItem('sa_attempts') || '[]');
+  let apps = JSON.parse(localStorage.getItem('sa_apps') || '[]');
+  let filterDate = '';
+
+  const save = () => {
+    localStorage.setItem('sa_attempts', JSON.stringify(attempts));
+    localStorage.setItem('sa_apps', JSON.stringify(apps));
+  };
+
+  const toast = (msg) => {
+    const w = document.getElementById('toastWrap');
+    const el = document.createElement('div');
+    el.className = 'toast-item';
+    el.textContent = msg;
+    w.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+  };
+
+  const today = () => new Date().toISOString().split('T')[0];
+  const now = () => new Date().toTimeString().slice(0,5);
+
+  const outcomeClass = o => ({'Sold':'badge-success','Rejected':'badge-failed','Pending':'badge-pending','Follow-up':'badge-new'}[o]||'badge-pending');
+  const respClass = r => ({'Responded':'badge-success','Interested':'badge-new','Not Interested':'badge-failed','No Response':'badge-pending'}[r]||'badge-pending');
+
+  const renderDashboard = () => {
+    const todayStr = today();
+    const todayAttempts = attempts.filter(a => a.date === todayStr);
+    const responded = todayAttempts.filter(a => a.response !== 'No Response');
+    const sold = todayAttempts.filter(a => a.outcome === 'Sold');
+
+    document.getElementById('stat-attempts').textContent = todayAttempts.length;
+    document.getElementById('stat-responses').textContent = responded.length;
+    document.getElementById('stat-conversions').textContent = sold.length;
+    document.getElementById('stat-total').textContent = attempts.length;
+
+    const rate = todayAttempts.length ? Math.round(responded.length/todayAttempts.length*100) : 0;
+    document.getElementById('stat-resp-change').textContent = `↑ ${rate}% response rate`;
+    const conv = todayAttempts.length ? Math.round(sold.length/todayAttempts.length*100) : 0;
+    document.getElementById('stat-conv-rate').className = `change ${conv>0?'up':''}`;
+    document.getElementById('stat-conv-rate').textContent = `${conv}% conversion rate`;
+
+    // weekly chart
+    const chart = document.getElementById('weekChart');
+    const labels = document.getElementById('weekLabels');
+    chart.innerHTML = ''; labels.innerHTML = '';
+    const days = [];
+    for(let i=6;i>=0;i--){
+      const d = new Date(); d.setDate(d.getDate()-i);
+      days.push(d.toISOString().split('T')[0]);
+    }
+    const counts = days.map(d => attempts.filter(a=>a.date===d).length);
+    const max = Math.max(...counts,1);
+    days.forEach((d,i)=>{
+      const pct = Math.round(counts[i]/max*100);
+      const wrap = document.createElement('div'); wrap.className='bar-wrap';
+      const bar = document.createElement('div'); bar.className='bar';
+      bar.style.height=`${Math.max(pct,4)}%`;
+      bar.title=`${counts[i]} attempts`;
+      wrap.appendChild(bar); chart.appendChild(wrap);
+
+      const lbl = document.createElement('span');
+      lbl.style.cssText='font-size:0.55rem;color:var(--muted);flex:1;text-align:center;';
+      lbl.textContent=['Su','Mo','Tu','We','Th','Fr','Sa'][new Date(d+'T00:00').getDay()];
+      labels.appendChild(lbl);
+    });
+
+    // app perf
+    const appPerf = document.getElementById('appPerfList');
+    if(!apps.length){ appPerf.innerHTML='<div style="font-size:0.75rem;color:var(--muted);padding:8px 0;">No apps yet.</div>'; }
+    else {
+      appPerf.innerHTML = apps.map(app=>{
+        const total = attempts.filter(a=>a.app===app.name).length;
+        const soldC = attempts.filter(a=>a.app===app.name&&a.outcome==='Sold').length;
+        const pct = total?Math.round(soldC/total*100):0;
+        return `<div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:4px;">
+            <span>${app.name}</span><span style="color:var(--accent)">${soldC} sold / ${total} attempts</span>
+          </div>
+          <div class="meter-wrap"><div class="meter-fill" style="width:${pct}%"></div></div>
+        </div>`;
+      }).join('');
+    }
+
+    // recent table
+    const tbody = document.getElementById('recentTable');
+    const recent = [...attempts].reverse().slice(0,8);
+    if(!recent.length){ tbody.innerHTML='<tr><td colspan="8" style="color:var(--muted);font-size:0.75rem;padding:20px;">No attempts logged yet.</td></tr>'; return; }
+    tbody.innerHTML = recent.map((a,i)=>{
+      const realIdx = attempts.length - 1 - i;
+      return `<tr>
+        <td>${a.date}</td><td>${a.time}</td><td>${a.app||'—'}</td><td>${a.channel}</td>
+        <td><span class="badge-pill ${respClass(a.response)}">${a.response}</span></td>
+        <td><span class="badge-pill ${outcomeClass(a.outcome)}">${a.outcome}</span></td>
+        <td style="color:var(--muted);font-size:0.72rem;">${a.note||'—'}</td>
+        <td><button class="action-btn" onclick="App.editAttempt(${realIdx})">Edit</button></td>
+      </tr>`;
+    }).join('');
+  };
+
+  const renderAttempts = () => {
+    const tbody = document.getElementById('fullTable');
+    let filtered = filterDate ? attempts.filter(a=>a.date===filterDate) : attempts;
+    if(!filtered.length){ tbody.innerHTML='<tr><td colspan="8" style="color:var(--muted);font-size:0.75rem;padding:20px;">No records found.</td></tr>'; return; }
+    tbody.innerHTML = [...filtered].map((a)=>{
+      const realIdx = attempts.indexOf(a);
+      return `<tr>
+        <td>${a.date}</td><td>${a.time}</td><td>${a.app||'—'}</td><td>${a.channel}</td>
+        <td><span class="badge-pill ${respClass(a.response)}">${a.response}</span></td>
+        <td><span class="badge-pill ${outcomeClass(a.outcome)}">${a.outcome}</span></td>
+        <td style="color:var(--muted);font-size:0.72rem;">${a.note||'—'}</td>
+        <td class="d-flex gap-1">
+          <button class="action-btn" onclick="App.editAttempt(${realIdx})">Edit</button>
+          <button class="action-btn del" onclick="App.deleteAttempt(${realIdx})">Del</button>
+        </td>
+      </tr>`;
+    }).reverse().join('');
+  };
+
+  const renderResponses = () => {
+    document.getElementById('resp-responded').textContent = attempts.filter(a=>a.response!=='No Response').length;
+    document.getElementById('resp-noresp').textContent = attempts.filter(a=>a.response==='No Response').length;
+    document.getElementById('resp-sold').textContent = attempts.filter(a=>a.outcome==='Sold').length;
+
+    const channels = {};
+    attempts.forEach(a=>{ channels[a.channel]=(channels[a.channel]||{total:0,resp:0}); channels[a.channel].total++; if(a.response!=='No Response')channels[a.channel].resp++; });
+    const el = document.getElementById('channelBreakdown');
+    if(!Object.keys(channels).length){ el.innerHTML='<div style="color:var(--muted);font-size:0.75rem;">Log some attempts to see breakdown.</div>'; return; }
+    el.innerHTML = Object.entries(channels).map(([ch,d])=>{
+      const pct = d.total ? Math.round(d.resp/d.total*100) : 0;
+      return `<div style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:4px;">
+          <span>${ch}</span><span style="color:var(--accent)">${d.resp}/${d.total} responded (${pct}%)</span>
+        </div>
+        <div class="meter-wrap"><div class="meter-fill" style="width:${pct}%"></div></div>
+      </div>`;
+    }).join('');
+  };
+
+  const renderApps = () => {
+    const grid = document.getElementById('appGrid');
+    if(!apps.length){ grid.innerHTML='<div class="col-12" style="color:var(--muted);font-size:0.78rem;">No apps added yet.</div>'; return; }
+    grid.innerHTML = apps.map((app,i)=>{
+      const total = attempts.filter(a=>a.app===app.name).length;
+      const sold = attempts.filter(a=>a.app===app.name&&a.outcome==='Sold').length;
+      return `<div class="col-sm-6 col-lg-4">
+        <div class="stat-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;">${app.name}</div>
+              <div style="font-size:0.65rem;color:var(--muted);">${app.category} · $${app.price||0}</div>
+            </div>
+            <button class="action-btn del" onclick="App.deleteApp(${i})">Remove</button>
+          </div>
+          <div style="margin-top:10px;font-size:0.72rem;color:var(--muted);">${app.desc||''}</div>
+          <div style="margin-top:12px;display:flex;gap:16px;">
+            <div><div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--accent)">${total}</div><div style="font-size:0.62rem;color:var(--muted)">Attempts</div></div>
+            <div><div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--success)">${sold}</div><div style="font-size:0.62rem;color:var(--muted)">Sold</div></div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // update app select in modal
+    const sel = document.getElementById('inp-app');
+    const cur = sel.value;
+    sel.innerHTML='<option value="">— Select App —</option>'+apps.map(a=>`<option value="${a.name}">${a.name}</option>`).join('');
+    if(cur) sel.value=cur;
+  };
+
+  const renderAll = () => {
+    renderDashboard();
+    renderAttempts();
+    renderResponses();
+    renderApps();
+  };
+
+  // NAV
+  document.querySelectorAll('[data-page]').forEach(link=>{
+    link.addEventListener('click', e=>{
+      e.preventDefault();
+      document.querySelectorAll('[data-page]').forEach(l=>l.classList.remove('active'));
+      link.classList.add('active');
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      document.getElementById('page-'+link.dataset.page).classList.add('active');
+      document.getElementById('pageTitle').textContent = link.querySelector('span:last-child').textContent;
+      renderAll();
+    });
+  });
+
+  // LIVE DATE
+  const updateDate = () => {
+    document.getElementById('liveDate').textContent = new Date().toLocaleString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  };
+  updateDate(); setInterval(updateDate,1000);
+
+  // ATTEMPT MODAL
+  const openAttemptModal = () => {
+    document.getElementById('editIndex').value='-1';
+    document.getElementById('modalTitle').textContent='📋 Log Sales Attempt';
+    document.getElementById('inp-date').value=today();
+    document.getElementById('inp-time').value=now();
+    document.getElementById('inp-app').value='';
+    document.getElementById('inp-channel').value='WhatsApp';
+    document.getElementById('inp-response').value='No Response';
+    document.getElementById('inp-outcome').value='Pending';
+    document.getElementById('inp-note').value='';
+    document.getElementById('attemptModal').classList.add('open');
+  };
+  document.getElementById('logAttemptBtn').addEventListener('click', openAttemptModal);
+  document.getElementById('closeAttemptModal').addEventListener('click', ()=>document.getElementById('attemptModal').classList.remove('open'));
+
+  document.getElementById('saveAttemptBtn').addEventListener('click', ()=>{
+    const idx = parseInt(document.getElementById('editIndex').value);
+    const entry = {
+      date: document.getElementById('inp-date').value || today(),
+      time: document.getElementById('inp-time').value || now(),
+      app: document.getElementById('inp-app').value,
+      channel: document.getElementById('inp-channel').value,
+      response: document.getElementById('inp-response').value,
+      outcome: document.getElementById('inp-outcome').value,
+      note: document.getElementById('inp-note').value,
+    };
+    if(!entry.date){ toast('⚠️ Please enter a date.'); return; }
+    if(idx >= 0) { attempts[idx]=entry; toast('✅ Attempt updated!'); }
+    else { attempts.push(entry); toast('✅ Attempt logged!'); }
+    save();
+    document.getElementById('attemptModal').classList.remove('open');
+    renderAll();
+  });
+
+  const editAttempt = (idx) => {
+    const a = attempts[idx];
+    document.getElementById('editIndex').value=idx;
+    document.getElementById('modalTitle').textContent='✏️ Edit Attempt';
+    document.getElementById('inp-date').value=a.date;
+    document.getElementById('inp-time').value=a.time;
+    document.getElementById('inp-app').value=a.app||'';
+    document.getElementById('inp-channel').value=a.channel;
+    document.getElementById('inp-response').value=a.response;
+    document.getElementById('inp-outcome').value=a.outcome;
+    document.getElementById('inp-note').value=a.note||'';
+    document.getElementById('attemptModal').classList.add('open');
+  };
+
+  const deleteAttempt = (idx) => {
+    if(!confirm('Delete this attempt?')) return;
+    attempts.splice(idx,1);
+    save(); renderAll(); toast('🗑️ Attempt deleted.');
+  };
+
+  // FILTER
+  document.getElementById('filterDate').addEventListener('input', e=>{
+    filterDate = e.target.value;
+    renderAttempts();
+  });
+  const clearFilter = () => {
+    filterDate='';
+    document.getElementById('filterDate').value='';
+    renderAttempts();
+  };
+
+  // APP MODAL
+  document.getElementById('addAppBtn').addEventListener('click', ()=>{
+    document.getElementById('inp-appname').value='';
+    document.getElementById('inp-appcat').value='';
+    document.getElementById('inp-appprice').value='';
+    document.getElementById('inp-appdesc').value='';
+    document.getElementById('appModal').classList.add('open');
+  });
+  document.getElementById('closeAppModal').addEventListener('click', ()=>document.getElementById('appModal').classList.remove('open'));
+  document.getElementById('saveAppBtn').addEventListener('click', ()=>{
+    const name = document.getElementById('inp-appname').value.trim();
+    if(!name){ toast('⚠️ App name required.'); return; }
+    apps.push({
+      name,
+      category: document.getElementById('inp-appcat').value||'General',
+      price: document.getElementById('inp-appprice').value||'0',
+      desc: document.getElementById('inp-appdesc').value,
+    });
+    save(); renderAll();
+    document.getElementById('appModal').classList.remove('open');
+    toast('📱 App added!');
+  });
+
+  const deleteApp = (idx) => {
+    if(!confirm('Remove this app?')) return;
+    apps.splice(idx,1); save(); renderAll(); toast('🗑️ App removed.');
+  };
+
+  renderAll();
+
+  return { editAttempt, deleteAttempt, deleteApp, clearFilter };
+})();
+</script>
+</body>
+</html>
